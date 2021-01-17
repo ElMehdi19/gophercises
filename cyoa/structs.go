@@ -1,9 +1,13 @@
 package cyoa
 
+import "html/template"
 
 type handler struct {
 	s Story
+	t *template.Template
 }
+
+type HandlerOption func(h *handler)
 
 // Story alias
 type Story map[string]Chapter

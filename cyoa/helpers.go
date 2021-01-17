@@ -23,9 +23,18 @@ func JSONStoryParser(r io.Reader) (Story, error) {
 	return story, nil
 }
 
+func WithTemplate(t *template.Template) HandlerOption {
+    return func (h *handler) {
+        h.t = t
+    }
+}
 
-func NewHandler(s Story) http.Handler {
-	return handler{s}
+func NewHandler(s Story, opts ...HandlerOption) http.Handler {
+    h := handler{ s, tpl }
+    for _, opt := range opts {
+        opt(&h)
+    }
+	return h
 }
 
 
@@ -38,7 +47,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path = path[1:]
 
 	if chapter, ok := h.s[path]; ok {
-		if err := tpl.Execute(w, chapter); err != nil {
+		if err := h.t.Execute(w, chapter); err != nil {
 			log.Printf("%v", err)
 			http.Error(w, "Bad shit happened", http.StatusInternalServerError)
 		}

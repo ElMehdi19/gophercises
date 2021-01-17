@@ -26,3 +26,16 @@ const baseTemplate string = `
     </body>
 </html>
 `
+
+const AltTemplate string = `
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        <title>Choose your own adventure</title>
+    </head>
+    <body>
+		<h1>Chapter is about: <span>{{ .Title }}</span></h1>
+    </body>
+</html>
+`
