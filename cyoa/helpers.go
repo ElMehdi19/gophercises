@@ -6,6 +6,8 @@ import (
     "net/http"
     "log"
     "io"
+    "fmt"
+    "errors"
 )
 
 
@@ -38,7 +40,7 @@ func NewHandler(s Story, opts ...HandlerOption) http.Handler {
 }
 
 
-func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h handler) chapterPath(r *http.Request) (*Chapter, error) {
 	path := r.URL.Path
 
 	if path == "" || path == "/" {
@@ -46,12 +48,32 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	path = path[1:]
 
-	if chapter, ok := h.s[path]; ok {
-		if err := h.t.Execute(w, chapter); err != nil {
-			log.Printf("%v", err)
-			http.Error(w, "Bad shit happened", http.StatusInternalServerError)
-		}
-		return
+    chapter, ok := h.s[path]
+    if !ok {
+        return nil, errors.New(fmt.Sprintf("Chapter `%s` doesn't exist in story", path))
+    }
+    return &chapter, nil
+
+}
+
+func logRequest(r *http.Request) {
+    path := r.URL.Path
+    method := r.Method
+    remote := r.RemoteAddr
+    log.Printf("%s %s FROM %s", method, path, remote)
+}
+
+func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+    logRequest(r)
+    chapter, err := h.chapterPath(r)
+    if err != nil {
+        log.Printf("%v", err)
+        http.Error(w, fmt.Sprintf("%v", err), http.StatusNotFound)
+        return
+    }
+
+	if err := h.t.Execute(w, *chapter); err != nil {
+		log.Printf("%v", err)
+		http.Error(w, "Bad shit happened", http.StatusInternalServerError)
 	}
-	http.Error(w, "You're lost", http.StatusNotFound)
 }
