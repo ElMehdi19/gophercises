@@ -20,16 +20,21 @@ func Parse(r io.Reader) ([]Link, error) {
 		return nil, err
 	}
 	// fmt.Printf("%+v\n", doc)
-	dfs(doc, "")
+	nodes := linkNodes(doc)
+	for i, node := range nodes {
+		// checking out Node attributes
+		fmt.Printf("Attrs for link #%d: %s\n", i, node.Attr)
+	}
 	return []Link{}, nil
 }
 
-func dfs(node *html.Node, padding string) {
-	if node.Type == html.ElementNode {
-		fmt.Printf("%s<%s>\n", padding, node.Data)
+func linkNodes(node *html.Node) []*html.Node {
+	if node.Type == html.ElementNode && node.Data == "a" {
+		return []*html.Node{node}
 	}
-
+	nodes := []*html.Node{}
 	for child := node.FirstChild; child != nil; child = child.NextSibling {
-		dfs(child, padding+"  ")
+		nodes = append(nodes, linkNodes(child)...)
 	}
+	return nodes
 }
