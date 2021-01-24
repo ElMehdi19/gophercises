@@ -27,6 +27,7 @@ const baseTemplate string = `
 </html>
 `
 
+// AltTemplate alternative html template for playing around...
 const AltTemplate string = `
 <!DOCTYPE html>
 <html lang="en" dir="ltr">

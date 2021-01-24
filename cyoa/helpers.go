@@ -1,17 +1,15 @@
 package cyoa
 
 import (
-    "encoding/json"
-    "html/template"
-    "net/http"
-    "log"
-    "io"
-    "fmt"
-    "errors"
+	"encoding/json"
+	"fmt"
+	"html/template"
+	"io"
+	"log"
+	"net/http"
 )
 
-
-func init(){
+func init() {
 	tpl = template.Must(template.New("").Parse(baseTemplate))
 }
 
@@ -25,20 +23,21 @@ func JSONStoryParser(r io.Reader) (Story, error) {
 	return story, nil
 }
 
+// WithTemplate function used to render a custom template
 func WithTemplate(t *template.Template) HandlerOption {
-    return func (h *handler) {
-        h.t = t
-    }
+	return func(h *handler) {
+		h.t = t
+	}
 }
 
+// NewHandler function to customize the default handler with HandlerOption
 func NewHandler(s Story, opts ...HandlerOption) http.Handler {
-    h := handler{ s, tpl }
-    for _, opt := range opts {
-        opt(&h)
-    }
+	h := handler{s, tpl}
+	for _, opt := range opts {
+		opt(&h)
+	}
 	return h
 }
-
 
 func (h handler) chapterPath(r *http.Request) (*Chapter, error) {
 	path := r.URL.Path
@@ -48,29 +47,29 @@ func (h handler) chapterPath(r *http.Request) (*Chapter, error) {
 	}
 	path = path[1:]
 
-    chapter, ok := h.s[path]
-    if !ok {
-        return nil, errors.New(fmt.Sprintf("Chapter `%s` doesn't exist in story", path))
-    }
-    return &chapter, nil
+	chapter, ok := h.s[path]
+	if !ok {
+		return nil, fmt.Errorf(fmt.Sprintf("Chapter `%s` doesn't exist in story", path))
+	}
+	return &chapter, nil
 
 }
 
 func logRequest(r *http.Request) {
-    path := r.URL.Path
-    method := r.Method
-    remote := r.RemoteAddr
-    log.Printf("%s %s FROM %s", method, path, remote)
+	path := r.URL.Path
+	method := r.Method
+	remote := r.RemoteAddr
+	log.Printf("%s %s FROM %s", method, path, remote)
 }
 
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-    logRequest(r)
-    chapter, err := h.chapterPath(r)
-    if err != nil {
-        log.Printf("%v", err)
-        http.Error(w, fmt.Sprintf("%v", err), http.StatusNotFound)
-        return
-    }
+	logRequest(r)
+	chapter, err := h.chapterPath(r)
+	if err != nil {
+		log.Printf("%v", err)
+		http.Error(w, fmt.Sprintf("%v", err), http.StatusNotFound)
+		return
+	}
 
 	if err := h.t.Execute(w, *chapter); err != nil {
 		log.Printf("%v", err)

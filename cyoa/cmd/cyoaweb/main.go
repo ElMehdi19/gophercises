@@ -3,14 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/ElMehdi19/gophercises/cyoa"
 )
-
-
 
 func exit(err error) {
 	fmt.Println(fmt.Errorf("%s", err))

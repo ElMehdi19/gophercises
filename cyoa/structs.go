@@ -7,6 +7,7 @@ type handler struct {
 	t *template.Template
 }
 
+// HandlerOption function to be passed to NewHandler to add functionnality
 type HandlerOption func(h *handler)
 
 // Story alias
