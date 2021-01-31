@@ -66,7 +66,7 @@ func filterHrefs(hrefs []string, base string) []string {
 type empty struct{}
 
 func bfs(urlStr string, maxDepth int) []string {
-	var visited map[string]empty
+	visited := map[string]empty{}
 	var current map[string]empty
 	var next = map[string]empty{
 		urlStr: empty{},
