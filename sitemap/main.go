@@ -13,9 +13,10 @@ import (
 
 func main() {
 	urlFlag := flag.String("url", "https://gophercises.com", "`Page URL` to build a sitemap for")
+	maxDepth := flag.Int("depth", 3, "BFS max depth")
 	flag.Parse()
 
-	hrefs := get(*urlFlag)
+	hrefs := bfs(*urlFlag, *maxDepth)
 	for _, href := range hrefs {
 		fmt.Println(href)
 	}
@@ -60,4 +61,34 @@ func filterHrefs(hrefs []string, base string) []string {
 		}
 	}
 	return filtred
+}
+
+type empty struct{}
+
+func bfs(urlStr string, maxDepth int) []string {
+	var visited map[string]empty
+	var current map[string]empty
+	var next = map[string]empty{
+		urlStr: empty{},
+	}
+
+	for i := 0; i <= maxDepth; i++ {
+		current, next = next, map[string]empty{}
+		for url := range current {
+			if _, ok := visited[url]; ok {
+				continue
+			}
+			visited[url] = empty{}
+
+			for _, href := range get(url) {
+				next[href] = empty{}
+			}
+		}
+	}
+
+	var urlList []string
+	for href := range visited {
+		urlList = append(urlList, href)
+	}
+	return urlList
 }
