@@ -1,24 +1,44 @@
 package main
 
 import (
+	"encoding/xml"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/ElMehdi19/gophercises/link"
 )
+
+type loc struct {
+	Value string `xml:"loc"`
+}
+
+type urlset struct {
+	Urls []loc `xml:"url"`
+}
+
+const header = `<?xml version="1.0" encoding="UTF-8"?>` + "\n"
 
 func main() {
 	urlFlag := flag.String("url", "https://gophercises.com", "`Page URL` to build a sitemap for")
 	maxDepth := flag.Int("depth", 3, "BFS max depth")
 	flag.Parse()
 
+	enc := xml.NewEncoder(os.Stdout)
+	enc.Indent("", " ")
+	var toXML urlset
 	hrefs := bfs(*urlFlag, *maxDepth)
 	for _, href := range hrefs {
-		fmt.Println(href)
+		toXML.Urls = append(toXML.Urls, loc{href})
+	}
+
+	fmt.Print(header)
+	if err := enc.Encode(toXML); err != nil {
+		log.Fatal(err)
 	}
 }
 
@@ -79,7 +99,6 @@ func bfs(urlStr string, maxDepth int) []string {
 				continue
 			}
 			visited[url] = empty{}
-
 			for _, href := range get(url) {
 				next[href] = empty{}
 			}
