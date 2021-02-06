@@ -6,13 +6,25 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-// Db boltdb instance
-var Db *bolt.DB
-var err error
+var taskBucket = []byte("tasks")
+var db *bolt.DB
 
-func init() {
-	Db, err = bolt.Open("my.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
+// Task schema in boltdb
+type Task struct {
+	Key   string
+	Value string
+}
+
+// Init initialize boltdb connection
+func Init(dbPath string) error {
+	var err error
+	db, err = bolt.Open(dbPath, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return db.Update(func(tx *bolt.Tx) error {
+		// run transaction here
+		_, err := tx.CreateBucketIfNotExists(taskBucket)
+		return err
+	})
 }

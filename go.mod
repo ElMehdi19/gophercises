@@ -16,4 +16,6 @@ require (
 	golang.org/x/net v0.0.0-20210119194325-5f4716e94777
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	honnef.co/go/tools v0.1.0 // indirect
+	mvdan.cc/interfacer v0.0.0-20180901003855-c20040233aed // indirect
+	mvdan.cc/lint v0.0.0-20170908181259-adc824a0674b // indirect
 )
