@@ -25,6 +25,7 @@ var doCommand = &cobra.Command{
 				if err != nil {
 					fmt.Println(err.Error())
 				}
+				fmt.Printf("Task %d done congrats.\n", key)
 			}
 		}
 	},
