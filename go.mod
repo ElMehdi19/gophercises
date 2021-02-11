@@ -9,6 +9,7 @@ require (
 	github.com/alexkohler/nakedret v1.0.0 // indirect
 	github.com/boltdb/bolt v1.3.1
 	github.com/kisielk/errcheck v1.5.0 // indirect
+	github.com/mdempsky/maligned v0.0.0-20201101000000-d73c43cb16d0 // indirect
 	github.com/mibk/dupl v1.0.0 // indirect
 	github.com/spf13/cobra v1.1.1
 	github.com/stripe/safesql v0.2.0 // indirect
