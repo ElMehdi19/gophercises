@@ -28,6 +28,40 @@ func main() {
 	must(err)
 	defer db.Close()
 	must(createPhoneNumsTable(db))
+
+	phones, err := getAllPhones(db)
+	must(err)
+	for _, phone := range phones {
+		fmt.Printf("Phone #%d: %s\n", phone.id, phone.number)
+	}
+}
+
+type phone struct {
+	id     int
+	number string
+}
+
+func getAllPhones(db *sql.DB) ([]phone, error) {
+	statement := "SELECT id, value FROM phone_numbers"
+	rows, err := db.Query(statement)
+	if err != nil {
+		return nil, err
+	}
+	var phones []phone
+	for rows.Next() {
+		var id int
+		var number string
+		if err := rows.Scan(&id, &number); err != nil {
+			return nil, err
+		}
+		phones = append(phones, phone{id, number})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return phones, nil
 }
 
 func getPhone(db *sql.DB, id int) (string, error) {
