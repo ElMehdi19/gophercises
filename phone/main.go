@@ -30,6 +30,16 @@ func main() {
 	must(createPhoneNumsTable(db))
 }
 
+func getPhone(db *sql.DB, id int) (string, error) {
+	statement := "SELECT value FROM phone_numbers WHERE id=$1"
+	var phoneNumber string
+	err := db.QueryRow(statement, id).Scan(&phoneNumber)
+	if err != nil {
+		return "", err
+	}
+	return phoneNumber, nil
+}
+
 func insertPhone(db *sql.DB, phone string) (int, error) {
 	statement := "INSERT INTO phone_numbers (value) VALUES ($1) RETURNING id"
 	var id int
