@@ -28,17 +28,56 @@ func main() {
 	must(err)
 	defer db.Close()
 	must(createPhoneNumsTable(db))
-
 	phones, err := getAllPhones(db)
 	must(err)
-	for _, phone := range phones {
-		fmt.Printf("Phone #%d: %s\n", phone.id, phone.number)
+
+	for _, p := range phones {
+		fmt.Printf("Working on... %+v\n", p)
+		normalized := normalize(p.number)
+		if p.number != normalized {
+			existing, err := findPhone(db, normalized)
+			must(err)
+			if existing != nil {
+				must(deletePhone(db, p))
+			} else {
+				p.number = normalized
+				must(updatePhone(db, p))
+			}
+		} else {
+			fmt.Println("No changes required")
+		}
 	}
+
 }
 
 type phone struct {
 	id     int
 	number string
+}
+
+func updatePhone(db *sql.DB, p phone) error {
+	statement := "UPDATE phone_numbers SET value=$2 WHERE id=$1"
+	_, err := db.Exec(statement, p.id, p.number)
+	return err
+}
+
+func deletePhone(db *sql.DB, p phone) error {
+	statement := "DELETE FROM phone_numbers WHERE id=$1"
+	_, err := db.Exec(statement, p.id)
+	return err
+}
+
+func findPhone(db *sql.DB, phoneNumber string) (*phone, error) {
+	var p phone
+	statement := "SELECT * FROM phone_numbers WHERE value=$1"
+	err := db.QueryRow(statement, phoneNumber).Scan(&p.id, &p.number)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &p, nil
 }
 
 func getAllPhones(db *sql.DB) ([]phone, error) {
