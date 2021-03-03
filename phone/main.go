@@ -1,11 +1,11 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"strings"
 
+	phonedb "github.com/ElMehdi19/gophercises/phone/db"
 	_ "github.com/lib/pq"
 )
 
@@ -18,133 +18,37 @@ const (
 
 func main() {
 	psqlInfo := fmt.Sprintf("host=%s user=%s password=%s sslmode=disable", host, user, password)
-	// db, err := sql.Open("postgres", psqlInfo)
-	// must(err)
-	// must(resetDB(db, dbname))
-	// db.Close()
+	must(phonedb.Reset("postgres", psqlInfo, dbname))
 
 	psqlInfo = fmt.Sprintf("%s dbname=%s", psqlInfo, dbname)
-	db, err := sql.Open("postgres", psqlInfo)
+	must(phonedb.Migrate("postgres", psqlInfo))
+
+	db, err := phonedb.Open("postgres", psqlInfo)
 	must(err)
 	defer db.Close()
-	must(createPhoneNumsTable(db))
-	phones, err := getAllPhones(db)
+
+	must(db.Seed())
+
+	phones, err := db.FindAllPhones()
 	must(err)
 
 	for _, p := range phones {
 		fmt.Printf("Working on... %+v\n", p)
-		normalized := normalize(p.number)
-		if p.number != normalized {
-			existing, err := findPhone(db, normalized)
+		normalized := normalize(p.Value)
+		if p.Value != normalized {
+			existing, err := db.FindPhone(normalized)
 			must(err)
 			if existing != nil {
-				must(deletePhone(db, p))
+				must(db.DeletePhone(p))
 			} else {
-				p.number = normalized
-				must(updatePhone(db, p))
+				p.Value = normalized
+				must(db.UpdatePhone(p))
 			}
 		} else {
 			fmt.Println("No changes required")
 		}
 	}
 
-}
-
-type phone struct {
-	id     int
-	number string
-}
-
-func updatePhone(db *sql.DB, p phone) error {
-	statement := "UPDATE phone_numbers SET value=$2 WHERE id=$1"
-	_, err := db.Exec(statement, p.id, p.number)
-	return err
-}
-
-func deletePhone(db *sql.DB, p phone) error {
-	statement := "DELETE FROM phone_numbers WHERE id=$1"
-	_, err := db.Exec(statement, p.id)
-	return err
-}
-
-func findPhone(db *sql.DB, phoneNumber string) (*phone, error) {
-	var p phone
-	statement := "SELECT * FROM phone_numbers WHERE value=$1"
-	err := db.QueryRow(statement, phoneNumber).Scan(&p.id, &p.number)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &p, nil
-}
-
-func getAllPhones(db *sql.DB) ([]phone, error) {
-	statement := "SELECT id, value FROM phone_numbers"
-	rows, err := db.Query(statement)
-	if err != nil {
-		return nil, err
-	}
-	var phones []phone
-	for rows.Next() {
-		var id int
-		var number string
-		if err := rows.Scan(&id, &number); err != nil {
-			return nil, err
-		}
-		phones = append(phones, phone{id, number})
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return phones, nil
-}
-
-func getPhone(db *sql.DB, id int) (string, error) {
-	statement := "SELECT value FROM phone_numbers WHERE id=$1"
-	var phoneNumber string
-	err := db.QueryRow(statement, id).Scan(&phoneNumber)
-	if err != nil {
-		return "", err
-	}
-	return phoneNumber, nil
-}
-
-func insertPhone(db *sql.DB, phone string) (int, error) {
-	statement := "INSERT INTO phone_numbers (value) VALUES ($1) RETURNING id"
-	var id int
-	err := db.QueryRow(statement, phone).Scan(&id)
-	if err != nil {
-		return -1, err
-	}
-	return id, nil
-}
-
-func createPhoneNumsTable(db *sql.DB) error {
-	statement := `CREATE TABLE IF NOT EXISTS phone_numbers(
-		id SERIAL,
-		value VARCHAR(255)
-	)`
-	_, err := db.Exec(statement)
-	return err
-}
-
-func resetDB(db *sql.DB, dbname string) error {
-	statement := fmt.Sprintf("DROP DATABASE IF EXISTS %s", dbname)
-	_, err := db.Exec(statement)
-	if err != nil {
-		return err
-	}
-	return createDB(db, dbname)
-}
-
-func createDB(db *sql.DB, dbname string) error {
-	statement := fmt.Sprintf("CREATE DATABASE %s", dbname)
-	_, err := db.Exec(statement)
-	return err
 }
 
 func must(err error) {
