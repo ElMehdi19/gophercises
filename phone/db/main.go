@@ -2,19 +2,7 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 )
-
-// DB type
-type DB struct {
-	db *sql.DB
-}
-
-// Phone relation schema
-type Phone struct {
-	ID    int
-	Value string
-}
 
 // Open database connection
 func Open(driverName, dataSource string) (*DB, error) {
@@ -47,16 +35,6 @@ func (db *DB) Seed() error {
 		}
 	}
 	return nil
-}
-
-func (db *DB) insertPhone(phoneNum string) (int, error) {
-	statement := "INSERT INTO phone_numbers (value) VALUES ($1) RETURNING id"
-	var id int
-	err := db.db.QueryRow(statement, phoneNum).Scan(&id)
-	if err != nil {
-		return -1, err
-	}
-	return id, nil
 }
 
 // FindPhone fetch one phone based on value column
@@ -113,53 +91,5 @@ func (db *DB) DeletePhone(phone Phone) error {
 func (db *DB) UpdatePhone(p Phone) error {
 	statement := "UPDATE phone_numbers SET value=$2 WHERE id=$1"
 	_, err := db.db.Exec(statement, p.ID, p.Value)
-	return err
-}
-
-// Reset database
-func Reset(driverName, dataSource, dbname string) error {
-	db, err := sql.Open(driverName, dataSource)
-	if err != nil {
-		return err
-	}
-	if err = resetDB(db, dbname); err != nil {
-		return err
-	}
-	return db.Close()
-}
-
-// Migrate database
-func Migrate(driverName, dataSource string) error {
-	db, err := sql.Open(driverName, dataSource)
-	if err != nil {
-		return err
-	}
-	if err = createPhoneNumsTable(db); err != nil {
-		return err
-	}
-	return db.Close()
-}
-
-func createPhoneNumsTable(db *sql.DB) error {
-	statement := `CREATE TABLE IF NOT EXISTS phone_numbers(
-		id SERIAL,
-		value VARCHAR(255)
-	)`
-	_, err := db.Exec(statement)
-	return err
-}
-
-func resetDB(db *sql.DB, dbname string) error {
-	statement := fmt.Sprintf("DROP DATABASE IF EXISTS %s", dbname)
-	_, err := db.Exec(statement)
-	if err != nil {
-		return err
-	}
-	return createDB(db, dbname)
-}
-
-func createDB(db *sql.DB, dbname string) error {
-	statement := fmt.Sprintf("CREATE DATABASE %s", dbname)
-	_, err := db.Exec(statement)
 	return err
 }
