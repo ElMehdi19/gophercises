@@ -1,22 +1,25 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	phonedb "github.com/ElMehdi19/gophercises/phone/db"
 	_ "github.com/lib/pq"
 )
 
-const (
-	host     = "127.0.0.1"
-	user     = "postgres"
-	password = "postgres"
-	dbname   = "gophers_phone"
+var (
+	host, _     = os.LookupEnv("DBHOST") //"127.0.0.1"
+	user, _     = os.LookupEnv("DBUSER")
+	password, _ = os.LookupEnv("DBPASS")
+	dbname, _   = os.LookupEnv("DBNAME")
 )
 
 func main() {
+	must(ensureEnvs(host, user, password, dbname))
 	psqlInfo := fmt.Sprintf("host=%s user=%s password=%s sslmode=disable", host, user, password)
 	must(phonedb.Reset("postgres", psqlInfo, dbname))
 
@@ -66,4 +69,13 @@ func normalize(phone string) string {
 		}
 	}
 	return sb.String()
+}
+
+func ensureEnvs(envs ...string) error {
+	for _, env := range envs {
+		if len(env) == 0 {
+			return errors.New("must set environement variables: DBHOST, DBUSER, DBPASS, DBNAME")
+		}
+	}
+	return nil
 }
