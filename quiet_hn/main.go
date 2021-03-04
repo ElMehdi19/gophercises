@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,15 +14,16 @@ import (
 )
 
 func main() {
-	numStories := 30
-	port := 5000
+	numStories := flag.Int("num_stories", 30, "how many stories to display")
+	port := flag.Int("port", 5000, "port to start the web server on")
+	flag.Parse()
 
 	tpl := template.Must(template.ParseFiles("./index.gohtml"))
 
-	http.HandleFunc("/", handler(numStories, tpl))
+	http.HandleFunc("/", handler(*numStories, tpl))
 
-	log.Printf("Running on http://127.0.0.1:%d", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	log.Printf("Running on http://127.0.0.1:%d", *port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 
 }
 
