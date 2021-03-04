@@ -20,6 +20,7 @@ func main() {
 
 	tpl := template.Must(template.ParseFiles("./index.gohtml"))
 
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/", handler(*numStories, tpl))
 
 	log.Printf("Running on http://127.0.0.1:%d", *port)
@@ -81,7 +82,7 @@ func parseItem(hnItem hn.Item) item {
 	newItem := item{Item: hnItem}
 	uri, err := url.Parse(newItem.URL)
 	if err == nil {
-		newItem.Host = strings.TrimPrefix(uri.Host, "www")
+		newItem.Host = strings.TrimPrefix(uri.Host, "www.")
 	}
 	return newItem
 }
