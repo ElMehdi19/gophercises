@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"text/template"
 	"time"
@@ -58,20 +59,21 @@ func getStoriesAsync(numStories int) ([]item, error) {
 	}
 
 	type result struct {
+		idx  int
 		item item
 		err  error
 	}
 
 	resultChan := make(chan result)
 	for i, id := range ids {
-		go func(id int) {
+		go func(i, id int) {
 			story, err := client.GetItem(id)
 			if err != nil {
-				resultChan <- result{err: err}
+				resultChan <- result{err: err, idx: i}
 			} else {
-				resultChan <- result{item: parseItem(story)}
+				resultChan <- result{item: parseItem(story), idx: i}
 			}
-		}(id)
+		}(i, id)
 		if i >= numStories {
 			break
 		}
@@ -81,6 +83,10 @@ func getStoriesAsync(numStories int) ([]item, error) {
 	for i := 0; i < numStories; i++ {
 		results = append(results, <-resultChan)
 	}
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].idx < results[j].idx
+	})
 
 	var stories []item
 	for _, res := range results {
