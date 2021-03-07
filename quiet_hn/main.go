@@ -31,29 +31,11 @@ func main() {
 func handler(numStories int, tpl *template.Template) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		started := time.Now()
-		var client hn.Client
-		ids, err := client.GetItems()
+
+		stories, err := getStoriesAsync(numStories)
 		if err != nil {
 			http.Error(w, "Something went wrong", http.StatusInternalServerError)
 			return
-		}
-
-		var stories []item
-		for _, id := range ids {
-			hnItem, err := client.GetItem(id)
-
-			if err != nil {
-				continue
-			}
-			parsedItem := parseItem(hnItem)
-
-			if isStoryLink(parsedItem) {
-				stories = append(stories, parsedItem)
-			}
-
-			if len(stories) >= numStories {
-				break
-			}
 		}
 
 		data := templateData{
@@ -66,6 +48,51 @@ func handler(numStories int, tpl *template.Template) http.HandlerFunc {
 			return
 		}
 	})
+}
+
+func getStoriesAsync(numStories int) ([]item, error) {
+	var client hn.Client
+	ids, err := client.GetItems()
+	if err != nil {
+		return nil, err
+	}
+
+	type result struct {
+		item item
+		err  error
+	}
+
+	resultChan := make(chan result)
+	for i, id := range ids {
+		go func(id int) {
+			story, err := client.GetItem(id)
+			if err != nil {
+				resultChan <- result{err: err}
+			} else {
+				resultChan <- result{item: parseItem(story)}
+			}
+		}(id)
+		if i >= numStories {
+			break
+		}
+	}
+
+	var results []result
+	for i := 0; i < numStories; i++ {
+		results = append(results, <-resultChan)
+	}
+
+	var stories []item
+	for _, res := range results {
+		if res.err != nil {
+			continue
+		}
+		if isStoryLink(res.item) {
+			stories = append(stories, res.item)
+		}
+	}
+
+	return stories, nil
 }
 
 type item struct {
