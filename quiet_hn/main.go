@@ -33,7 +33,7 @@ func handler(numStories int, tpl *template.Template) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		started := time.Now()
 
-		stories, err := getStoriesAsync(numStories)
+		stories, err := getStoriesFromCache(numStories)
 		if err != nil {
 			http.Error(w, "Something went wrong", http.StatusInternalServerError)
 			return
@@ -49,6 +49,26 @@ func handler(numStories int, tpl *template.Template) http.HandlerFunc {
 			return
 		}
 	})
+}
+
+var (
+	cache    []item
+	cacheExp time.Time
+)
+
+func getStoriesFromCache(numStories int) ([]item, error) {
+	if cacheExp.Sub(time.Now()) > 0 {
+		return cache, nil
+	}
+
+	items, err := getStoriesAsync(numStories)
+	if err != nil {
+		return nil, err
+	}
+	cache = items
+	cacheExp = time.Now().Add(15 * time.Second)
+
+	return cache, nil
 }
 
 func getStoriesAsync(numStories int) ([]item, error) {
