@@ -15,18 +15,22 @@ import (
 	"github.com/ElMehdi19/gophercises/quiet_hn/hn"
 )
 
+var (
+	numStories, port int
+)
+
 func main() {
-	numStories := flag.Int("num_stories", 30, "how many stories to display")
-	port := flag.Int("port", 5000, "port to start the web server on")
+	flag.IntVar(&numStories, "num_stories", 30, "how many stories to display")
+	flag.IntVar(&port, "port", 5000, "port to start the web server on")
 	flag.Parse()
 
 	tpl := template.Must(template.ParseFiles("./index.gohtml"))
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	http.HandleFunc("/", handler(*numStories, tpl))
+	http.HandleFunc("/", handler(numStories, tpl))
 
-	log.Printf("Running on http://127.0.0.1:%d", *port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
+	log.Printf("Running on http://127.0.0.1:%d", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 
 }
 
@@ -43,7 +47,7 @@ func handler(numStories int, tpl *template.Template) http.HandlerFunc {
 			temp := storyCache{
 				duration: sc.duration,
 			}
-			temp.getStories(numStories)
+			temp.getStories()
 			sc.mutex.Lock()
 			sc.cache = temp.cache
 			sc.expiration = temp.expiration
@@ -54,7 +58,7 @@ func handler(numStories int, tpl *template.Template) http.HandlerFunc {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		started := time.Now()
-		stories, err := sc.getStories(numStories)
+		stories, err := sc.getStories()
 		if err != nil {
 			http.Error(w, "Something went wrong", http.StatusInternalServerError)
 			return
@@ -82,7 +86,7 @@ type storyCache struct {
 // func (sc *storyCache) refreshCache(numStories int) {
 // }
 
-func (sc *storyCache) getStories(numStories int) ([]item, error) {
+func (sc *storyCache) getStories() ([]item, error) {
 	sc.mutex.Lock()
 	defer sc.mutex.Unlock()
 
@@ -90,7 +94,7 @@ func (sc *storyCache) getStories(numStories int) ([]item, error) {
 		return sc.cache, nil
 	}
 
-	items, err := getStoriesAsync(numStories)
+	items, err := getStoriesAsync()
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +104,7 @@ func (sc *storyCache) getStories(numStories int) ([]item, error) {
 	return sc.cache, nil
 }
 
-func getStoriesAsync(numStories int) ([]item, error) {
+func getStoriesAsync() ([]item, error) {
 	var client hn.Client
 	ids, err := client.GetItems()
 	if err != nil {
