@@ -3,17 +3,56 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 )
 
+type file struct {
+	filename, oldPath, newPath string
+}
+
 func main() {
-	fileName := "birthday_001.txt" // -> Birthday - 1 of 4.txt
-	parsed, err := match(fileName, 4)
+	dir := "./sample"
+	files, err := nonRecursive(dir)
 	if err != nil {
-		log.Fatalf("error: %s", err.Error())
+		log.Fatal(err.Error())
 	}
-	fmt.Printf("%s -> %s\n", fileName, parsed)
+
+	for _, file := range files {
+		fmt.Printf("mv %s => %s\n", file.oldPath, file.newPath)
+		if err := os.Rename(file.oldPath, file.newPath); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func nonRecursive(dir string) ([]file, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	var files []file
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		if _, err := match(entry.Name(), 0); err == nil {
+			files = append(files, file{
+				filename: entry.Name(),
+				oldPath:  fmt.Sprintf("%s/%s", dir, entry.Name()),
+			})
+		}
+	}
+
+	for i := 0; i < len(files); i++ {
+		parsed, _ := match(files[i].filename, len(files))
+		files[i].newPath = fmt.Sprintf("%s/%s", dir, parsed)
+	}
+
+	return files, nil
 }
 
 func match(fileName string, total int) (string, error) {
