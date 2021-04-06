@@ -13,8 +13,9 @@ type file struct {
 }
 
 func main() {
-	dir := "./sample"
-	files, err := nonRecursive(dir)
+	entryPoint := "./sample"
+	// files, err := nonRecursive(dir)
+	files, err := recursive(entryPoint)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -50,6 +51,41 @@ func nonRecursive(dir string) ([]file, error) {
 	for i := 0; i < len(files); i++ {
 		parsed, _ := match(files[i].filename, len(files))
 		files[i].newPath = fmt.Sprintf("%s/%s", dir, parsed)
+	}
+
+	return files, nil
+}
+
+func recursive(dir string) ([]file, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	var files []file
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			newDir := fmt.Sprintf("%s/%s", dir, entry.Name())
+			if subEntries, err := recursive(newDir); err == nil {
+				files = append(files, subEntries...)
+			}
+			continue
+		}
+
+		if _, err := match(entry.Name(), 0); err == nil {
+			files = append(files, file{
+				filename: entry.Name(),
+				oldPath:  fmt.Sprintf("%s/%s", dir, entry.Name()),
+			})
+		}
+	}
+
+	for i := 0; i < len(files); i++ {
+		if files[i].newPath == "" {
+			parsedName, _ := match(files[i].filename, len(files))
+			files[i].newPath = fmt.Sprintf("%s/%s", dir, parsedName)
+		}
 	}
 
 	return files, nil
