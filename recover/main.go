@@ -23,6 +23,12 @@ func funcThatPanics() {
 }
 
 func panicDemo(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("%+v", err)
+			http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		}
+	}()
 	funcThatPanics()
 }
 
