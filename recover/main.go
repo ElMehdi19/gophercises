@@ -29,6 +29,7 @@ func recoverMw(h http.Handler, dev bool) http.HandlerFunc {
 			if err := recover(); err != nil {
 				log.Println(err)
 				if dev {
+					w.WriteHeader(http.StatusInternalServerError)
 					stack := debug.Stack()
 					fmt.Fprintf(w, "<h1>panic: %v</h1><pre>%s</pre>", err, string(stack))
 					return
