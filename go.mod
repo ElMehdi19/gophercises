@@ -6,6 +6,7 @@ require (
 	4d63.com/gochecknoglobals v0.0.0-20201008074935-acfc0b28355a // indirect
 	4d63.com/gochecknoinits v0.0.0-20200108094044-eb73b47b9fc4 // indirect
 	github.com/ElMehdi19/go-ds v0.0.0-20210430012635-ee5cd0f48235
+	github.com/alecthomas/chroma v0.9.1
 	github.com/alecthomas/gocyclo v0.0.0-20150208221726-aa8f8b160214 // indirect
 	github.com/alexkohler/nakedret v1.0.0 // indirect
 	github.com/boltdb/bolt v1.3.1

@@ -19,9 +19,9 @@ func main() {
 
 func newHandler() http.HandlerFunc {
 	mux := http.NewServeMux()
-
 	mux.HandleFunc("/", home)
 	mux.HandleFunc("/panic", panicDemo)
+	mux.HandleFunc("/debug/", sourceCodeHandler)
 
 	return loggingMw(recoverMw(mux, isDevMode()))
 }
