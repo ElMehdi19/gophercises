@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	mws "github.com/ElMehdi19/gophercises/recover_chroma/middlewares"
+	"github.com/ElMehdi19/gophercises/recover_chroma/routes"
+	"github.com/ElMehdi19/gophercises/recover_chroma/utils"
 )
 
 var port int
@@ -21,9 +25,12 @@ func main() {
 
 func newHandler() http.HandlerFunc {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", home)
-	mux.HandleFunc("/panic", panicDemo)
-	mux.HandleFunc("/debug/", sourceCodeHandler)
+	mux.HandleFunc("/", routes.Home)
+	mux.HandleFunc("/panic", routes.PanicDemo)
 
-	return loggingMw(recoverMw(mux, isDevMode()))
+	if utils.IsDevMode() {
+		mux.HandleFunc("/debug/", routes.SourceCodeHandler)
+	}
+
+	return mws.LoggingMw(mws.RecoverMw(mux))
 }

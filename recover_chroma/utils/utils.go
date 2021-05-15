@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"fmt"
@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-func isDevMode() bool {
+func IsDevMode() bool {
 	return os.Getenv("dev_mode") == "true"
 }
 
-func funcThatPanics() {
+func FuncThatPanics() {
 	panic("Oh jeez Rick!!")
 }
 
@@ -26,9 +26,13 @@ func (s sourceCodeFile) link() string {
 	return fmt.Sprintf("<a href='/debug/?path=%s' target='blank'>%s</a>:%d %s", s.path, s.path, s.lineNum, s.addr)
 }
 
-func parseStackLine(line string) *sourceCodeFile {
+func parseStackLine(line string) (sourceCodeFile, error) {
 	var code sourceCodeFile
 	var err error
+	if !strings.HasPrefix(line, "\t") {
+		return code, fmt.Errorf("no match")
+	}
+
 	parts := strings.Split(line, ":")
 	code.path = parts[0]
 
@@ -37,25 +41,20 @@ func parseStackLine(line string) *sourceCodeFile {
 
 	if err != nil {
 		log.Printf("error: %s", err.Error())
-		return nil
+		return code, err
 	}
 	if len(parts) > 1 {
 		code.addr = parts[1]
 	}
 
-	return &code
+	return code, nil
 }
 
-func createLinks(stack string) string {
+func CreateLinks(stack string) string {
 	lines := strings.Split(stack, "\n")
 	// for _, line := range lines {
 	for i := 0; i < len(lines); i++ {
-		if strings.HasPrefix(lines[i], "\t") {
-			line := parseStackLine(lines[i])
-			if line == nil {
-				log.Printf("couldn't parse line %d: %s", i, lines[i])
-				continue
-			}
+		if line, err := parseStackLine(lines[i]); err == nil {
 			lines[i] = line.link()
 		}
 	}

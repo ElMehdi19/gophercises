@@ -1,32 +1,23 @@
-package main
+package mws
 
 import (
 	"fmt"
 	"log"
 	"net/http"
 	"runtime/debug"
+
+	"github.com/ElMehdi19/gophercises/recover_chroma/utils"
 )
 
-func loggingMw(handler http.Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-		method := r.Method
-		remote := r.RemoteAddr
-
-		log.Printf("%s %s %s\n", method, path, remote)
-		handler.ServeHTTP(w, r)
-	}
-}
-
-func recoverMw(handler http.Handler, devMode bool) http.HandlerFunc {
+func RecoverMw(handler http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Println("panic:", err)
 
-				if devMode {
+				if utils.IsDevMode() {
 					stack := debug.Stack()
-					stackWithLinks := createLinks(string(stack))
+					stackWithLinks := utils.CreateLinks(string(stack))
 					fmt.Fprintf(w, "<h1><b>panic: </b>%s</h1><pre>%s</pre>", err, stackWithLinks)
 					return
 				}

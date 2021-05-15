@@ -1,4 +1,4 @@
-package main
+package routes
 
 import (
 	"bytes"
@@ -7,18 +7,19 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/ElMehdi19/gophercises/recover_chroma/utils"
 	"github.com/alecthomas/chroma/quick"
 )
 
-func home(w http.ResponseWriter, r *http.Request) {
+func Home(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "<h1>Home page</h1>")
 }
 
-func panicDemo(w http.ResponseWriter, r *http.Request) {
-	funcThatPanics()
+func PanicDemo(w http.ResponseWriter, r *http.Request) {
+	utils.FuncThatPanics()
 }
 
-func sourceCodeHandler(w http.ResponseWriter, r *http.Request) {
+func SourceCodeHandler(w http.ResponseWriter, r *http.Request) {
 	path := r.FormValue("path")
 	file, err := os.Open(path)
 	if err != nil {
@@ -31,5 +32,5 @@ func sourceCodeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	quick.Highlight(w, buf.String(), "go", "html", "monokai")
+	quick.Highlight(w, buf.String(), "go", "html", "github")
 }
