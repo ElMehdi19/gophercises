@@ -26,7 +26,8 @@ func recoverMw(handler http.Handler, devMode bool) http.HandlerFunc {
 
 				if devMode {
 					stack := debug.Stack()
-					fmt.Fprintf(w, "<h1><b>panic: </b>%s</h1><pre>%s</pre>", err, string(stack))
+					stackWithLinks := createLinks(string(stack))
+					fmt.Fprintf(w, "<h1><b>panic: </b>%s</h1><pre>%s</pre>", err, stackWithLinks)
 					return
 				}
 
