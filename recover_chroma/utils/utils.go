@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -23,7 +24,11 @@ type sourceCodeFile struct {
 }
 
 func (s sourceCodeFile) link() string {
-	return fmt.Sprintf("<a href='/debug/?path=%s' target='blank'>%s</a>:%d %s", s.path, s.path, s.lineNum, s.addr)
+	val := url.Values{}
+	val.Add("path", s.path)
+	val.Add("line", fmt.Sprint(s.lineNum))
+	log.Println("values:", val.Encode())
+	return fmt.Sprintf("\t<a href='/debug/?%s' target='blank'>%s</a>:%d %s", val.Encode(), s.path, s.lineNum, s.addr)
 }
 
 func parseStackLine(line string) (sourceCodeFile, error) {
@@ -34,7 +39,7 @@ func parseStackLine(line string) (sourceCodeFile, error) {
 	}
 
 	parts := strings.Split(line, ":")
-	code.path = parts[0]
+	code.path = strings.TrimSpace(parts[0])
 
 	parts = strings.Fields(parts[1])
 	code.lineNum, err = strconv.Atoi(parts[0])
